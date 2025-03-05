@@ -67,6 +67,9 @@ def retrieve_and_generate_response(query):
 
 def filter_query(query):
     """Filter inappropriate or off-topic queries."""
+    if not query or not isinstance(query, str):  # ✅ Ensure query is a string
+        return "Invalid input. Please enter a valid financial query.", True
+
     prohibited_keywords = ['violence', 'harm', 'racism', 'fraud', 'scam']
     for word in prohibited_keywords:
         if re.search(rf"\b{word}\b", query, re.IGNORECASE):
@@ -79,6 +82,9 @@ def filter_query(query):
 
 def filter_answer(answer):
     """Filter inappropriate or off-topic answers."""
+    if not answer or not isinstance(answer, str):  # ✅ Ensure answer is a string
+        return "The response is invalid or missing. Please try again.", True
+
     forbidden_terms = ['capital', 'science', 'sports', 'france']
     for term in forbidden_terms:
         if term in answer.lower():
@@ -91,10 +97,12 @@ def filter_answer(answer):
 
 def generate_reponse_bot(query):
     """Generate a response to the user's query."""
+    logger.info(f"inside generate response bot...{query}")
     res, is_filtered = filter_query(query)
     if is_filtered:  # Query is filtered
         return res, 1
     answer, confidence = retrieve_and_generate_response(query)
+    logger.info(f"got the result Confidence: {confidence}")
     res, is_filtered = filter_answer(answer)
     if is_filtered:  # Response is filtered
         return res, 1
@@ -128,13 +136,6 @@ def main():
     chunk_path = "text_chunks.pkl"
     text_chunks = load_text_chunks("financial_reports")
     build_faiss_index(text_chunks, model, index_path, chunk_path)
-
-    # Load models and data
-    tokenizer = AutoTokenizer.from_pretrained("microsoft/phi-1_5")
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    slm_model = AutoModelForCausalLM.from_pretrained(
-        "microsoft/phi-1_5", torch_dtype=torch.float16
-    ).to(device)
 
 # Run preprocessing if this script is executed directly
 if __name__ == "__main__":
