@@ -7,10 +7,16 @@ from rank_bm25 import BM25Okapi
 import re
 import pickle
 import os
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def build_faiss_index(chunks, model, index_path, chunk_path, batch_size=32):
     """Build and save a FAISS index from text chunks, ensuring retrieval consistency."""
     if not chunks:
+        logger.error("No text chunks provided for FAISS indexing.")
         raise ValueError("No text chunks provided for FAISS indexing.")
 
     index = None
@@ -23,24 +29,28 @@ def build_faiss_index(chunks, model, index_path, chunk_path, batch_size=32):
             index = faiss.IndexFlatL2(embedding_dim)
 
         index.add(embeddings)
+        logger.info(f"Added {len(batch)} embeddings to the FAISS index.")
 
     faiss.write_index(index, index_path)
 
     # Save chunks to maintain consistency with FAISS indices
     with open(chunk_path, "wb") as f:
         pickle.dump(chunks, f)
+        logger.info(f"Text chunks saved to {chunk_path}. from build_faiss_index")
 
     print(f"FAISS index built with {index.ntotal} embeddings and saved to {index_path}.")
 
 def load_faiss_index(index_path):
     """Load FAISS index from file."""
     if not os.path.exists(index_path):
+        logger.error(f"FAISS index not found at {index_path}")
         raise FileNotFoundError(f"FAISS index not found at {index_path}")
     return faiss.read_index(index_path)
 
 def load_text_chunks_from_pickle(chunk_path):
     """Load text chunks from a pickle file."""
     if not os.path.exists(chunk_path):
+        logger.error(f"Chunk file not found at {chunk_path}")
         raise FileNotFoundError(f"Chunk file not found at {chunk_path}")
     with open(chunk_path, "rb") as f:
         return pickle.load(f)
@@ -56,7 +66,7 @@ def faiss_retrieval(query, model, faiss_index, chunks, top_k=5):
     if faiss_index.ntotal == 0:
         return []
     query_embedding = model.encode([query], convert_to_numpy=True)
-    distances, indices = faiss_index.search(query_embedding, top_k)
+    indices = faiss_index.search(query_embedding, top_k)
     return [chunks[i] for i in indices[0] if 0 <= i < len(chunks)]
 
 def hybrid_retrieval(query, model, faiss_index, chunks):
@@ -72,6 +82,7 @@ def extract_answer(text):
 def generate_response(query, context, model, tokenizer):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     formatted_context = "\n\n".join(context)
+    logger.info(f"formatted_context: {formatted_context}")
     prompt = (f"You are a financial assistant. Given the following context, answer the user's question accurately.\n\n"
               f"Context:\n{formatted_context}\n\n"
               f"Question: {query}\n\n"

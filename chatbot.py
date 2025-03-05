@@ -112,6 +112,7 @@ def generate_reponse_bot(query):
 def main():
     """Run preprocessing steps."""
     # Create the folder if it doesn't exist
+    logger.info("inside main of chatbot...")
     folder_name = "financial_reports"
     os.makedirs(folder_name, exist_ok=True)
 
@@ -122,9 +123,10 @@ def main():
     }
     for year, url in reports.items():
         download_report(url, f"broadcom_{year}.pdf")
-
+    logger.info("Downloaded reports successfully!")
     # Extract and clean text
     for file in os.listdir("financial_reports"):
+        logger.info(f"inside for loop...{file}")
         if file.endswith(".pdf"):
             pdf_path = os.path.join("financial_reports", file)
             output_txt_path = os.path.join("financial_reports", f"{Path(file).stem}_cleaned.txt")
