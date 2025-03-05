@@ -23,6 +23,11 @@ torch.set_num_threads(1)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+@st.cache_resource
+def load_data():
+    logger.info("Loading preprocessed data from load_data...")
+    load_preprocessed_data()
+
 # Function to handle asyncio in Streamlit
 def run_async_function(coro):
     try:
@@ -40,7 +45,7 @@ st.title("Financial Chatbot")
 # Load preprocessed data
 logger.info("Loading preprocessed data...")
 try:
-    load_preprocessed_data()
+    load_data()
     logger.info("Preprocessed data loaded successfully!")
 except Exception as e:
     logger.error(f"Error loading preprocessed data: {e}")
