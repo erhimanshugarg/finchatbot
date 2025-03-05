@@ -9,6 +9,7 @@ st.set_page_config(page_title="Retrieval-Augmented Generation (RAG)", layout="wi
 
 # Check if data files exist, if not, generate them
 if not os.path.exists("financial_index.faiss") or not os.path.exists("text_chunks.pkl"):
+    st.warning("Data files not found. Please run the following command in the terminal to generate the data files:")
     import chatbot
     chatbot.main()
 
