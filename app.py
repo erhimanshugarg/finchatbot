@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Cache the preprocessed data to avoid reloading on every interaction
-@st.cache_resource(allow_output_mutation=True)
+@st.cache_resource
 def load_data():
     logger.info("Loading preprocessed data...")
     try:
