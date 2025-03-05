@@ -7,6 +7,7 @@ from retrieval_and_generation import build_faiss_index, load_faiss_index, load_t
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from sentence_transformers import SentenceTransformer
 from pathlib import Path
+import logging
 import re
 
 # Global variables for FAISS index, text chunks, and models
@@ -16,22 +17,30 @@ model = None
 slm_model = None
 tokenizer = None
 
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 def load_preprocessed_data():
     """Load preprocessed data (FAISS index, text chunks, models, etc.)."""
     global faiss_index, text_chunks, model, slm_model, tokenizer
-
+    logger.info(f"inside load preprocessed data...{faiss_index} {text_chunks} {model} {slm_model} {tokenizer}")
     # Load FAISS index
     index_path = "financial_index.faiss"
     if os.path.exists(index_path):
         faiss_index = load_faiss_index(index_path)
+        logger.info(f"FAISS index loaded successfully from {index_path} and assigned to faiss_index.")
     else:
+        logger.error(f"FAISS index not found at {index_path}")
         raise FileNotFoundError(f"FAISS index not found at {index_path}")
 
     # Load text chunks
     chunk_path = "text_chunks.pkl"
     if os.path.exists(chunk_path):
         text_chunks = load_text_chunks_from_pickle(chunk_path)
+        logger.info(f"Text chunks loaded successfully from {chunk_path} and assigned to text_chunks.")
     else:
+        logger.error(f"Text chunks not found at {chunk_path}")
         raise FileNotFoundError(f"Text chunks not found at {chunk_path}")
 
     # Load models
@@ -45,11 +54,14 @@ def load_preprocessed_data():
 def retrieve_and_generate_response(query):
     """Retrieve relevant chunks and generate a response."""
     global faiss_index, text_chunks, model, slm_model, tokenizer  # Access global variables
+    logger.info(f"inside retrieve and generate response...{faiss_index} {text_chunks} {model} {slm_model} {tokenizer}")
     if faiss_index is None or text_chunks is None:
+        logger.error("Missing FAISS index or chunk data! Ensure data is available.")
         return "Missing FAISS index or chunk data! Ensure data is available.", 0
     retrieved_chunks = hybrid_retrieval(query, model, faiss_index, text_chunks)
     if retrieved_chunks:
         answer, confidence = generate_response(query, retrieved_chunks, slm_model, tokenizer)
+        logger.info(f"Confidence: {confidence}")
         return answer, confidence
     return "No relevant results found.", 0
 
