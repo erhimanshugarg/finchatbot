@@ -1,30 +1,37 @@
 # streamlit_app.py
 
 import streamlit as st
+# streamlit_app.py
+
+import os
 import logging
+import torch
+import nest_asyncio
 from chatbot import load_preprocessed_data, generate_reponse_bot
+
+# Fix event loop issues
+nest_asyncio.apply()
+
+# Disable static file watcher
+os.environ["STREAMLIT_SERVER_ENABLE_STATIC_FILE_WATCHER"] = "false"
+
+# Limit PyTorch threads
+torch.set_num_threads(1)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Cache the preprocessed data to avoid reloading on every interaction
-@st.cache_resource
-def load_data():
-    logger.info("Loading preprocessed data...")
-    try:
-        load_preprocessed_data()
-        logger.info("Preprocessed data loaded successfully!")
-        return True
-    except Exception as e:
-        logger.error(f"Error loading preprocessed data: {e}")
-        return False
-
 # Streamlit UI
 st.title("Financial Chatbot")
 
 # Load preprocessed data
-if not load_data():
+logger.info("Loading preprocessed data...")
+try:
+    load_preprocessed_data()
+    logger.info("Preprocessed data loaded successfully!")
+except Exception as e:
+    logger.error(f"Error loading preprocessed data: {e}")
     st.error("Failed to load preprocessed data. Please check the logs.")
     st.stop()
 
